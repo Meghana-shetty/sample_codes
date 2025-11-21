@@ -1,0 +1,88 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-user/your-python-repo.git'
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    pytest || true
+                '''
+            }
+        }
+
+        stage('Run Application') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    python app.py &
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'pkill -f app.py || true'
+        }
+    }
+}
+
+
+//Without Venv
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-user/your-python-project.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    pip install --user --upgrade pip
+                    pip install --user -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'pytest || true'
+            }
+        }
+
+        stage('Run App') {
+            steps {
+                sh 'python app.py &'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'pkill -f app.py || true'
+        }
+    }
+}
